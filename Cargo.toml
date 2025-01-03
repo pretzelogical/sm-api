@@ -7,3 +7,7 @@ edition = "2021"
 actix-web = "4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+deadpool-postgres = { version = "0.14.1" }
+tokio-postgres = { version = "^0.7.9" }
+tokio-pg-mapper = { version = "0.2.0" }
+tokio-pg-mapper-derive = { version = "0.2.0" }
