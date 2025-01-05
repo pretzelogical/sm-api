@@ -1,10 +1,11 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
-use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait};
+use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
 use crate::AppState;
 use serde_json::json;
 use sm_entity::user;
 
+type JsonError = serde_json::Value;
 
 #[derive(Deserialize)]
 pub struct GetUserArgs {
@@ -12,23 +13,34 @@ pub struct GetUserArgs {
     // pub name: String,
 }
 
-#[allow(unused_variables)]
+async fn get_by_id(user_id: i64, db_client: &DatabaseConnection) -> Result<user::Model, JsonError> {
+    let db_res = user::Entity::find_by_id(user_id)
+        .one(db_client)
+        .await;
+    match db_res {
+        Ok(user) => {
+            match user {
+                Some(user) => Ok(user),
+                None => Err(json!({ "error": "could not find user" }))
+            }
+        }
+        Err(_) => Err(json!({ "error": "database error" }))
+    }
+}
+
+
 #[get("/user")]
 pub async fn get_user(app_state: web::Data<AppState>, args: web::Query<GetUserArgs>) -> impl Responder {
     let db_client = &app_state.db_client;
-    let user_id = args.id;
-    match user_id {
+    match args.id {
         Some(user_id) => {
-            let user = user::Entity::find_by_id(user_id)
-                .one(db_client)
-                .await
-                .expect("Could not find user");
+            let user = get_by_id(user_id, db_client).await;
             match user {
-                Some(user) => HttpResponse::Ok().json(user),
-                None => HttpResponse::NotFound().body("Error: user not found")
+                Ok(user) => HttpResponse::Ok().json(user),
+                Err(e) => HttpResponse::InternalServerError().json(e)
             }
         },
-        None => HttpResponse::BadRequest().body("Error: no id in query args")
+        None => HttpResponse::BadRequest().json(json!({ "error": "'id' field missing"}))
     }
 }
 
@@ -38,7 +50,6 @@ pub struct CreateUserArgs {
     pub pass: Option<String>
 }
 
-#[allow(unused_variables, unreachable_code)]
 #[post("/user")]
 pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<CreateUserArgs>) -> impl Responder {
     let db_client = &app_state.db_client;
@@ -55,8 +66,8 @@ pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<Cr
             .await;
             match new_user {
                 Ok(new_user) => HttpResponse::Ok().json(new_user),
-                Err(error) => HttpResponse::InternalServerError()
-                    .json(json!({ "error": "Could not create new user"}))
+                Err(_) => HttpResponse::InternalServerError()
+                    .json(json!({ "error": "Could not create new user" }))
             }
         },
         (None, _) | (_, None) => {
@@ -65,3 +76,9 @@ pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<Cr
         }
     }
 }
+
+
+// #[delete("/user")]
+// pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<CreateUserArgs>) -> impl Responder {
+
+// }
