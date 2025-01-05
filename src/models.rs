@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use tokio_pg_mapper::FromTokioPostgresRow;
 use tokio_pg_mapper_derive::PostgresMapper;
 
-use crate::CreateUserArgs;
+use crate::routes::CreateUserArgs;
 
 
 #[derive(Serialize, Deserialize, PostgresMapper, Debug)]
