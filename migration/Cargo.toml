@@ -1,11 +1,11 @@
 [package]
-name = "migration"
+name = "sm-migration"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [lib]
-name = "migration"
+name = "sm_migration"
 path = "src/lib.rs"
 
 [dependencies]

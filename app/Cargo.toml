@@ -3,8 +3,13 @@ name = "sm-app"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "sm_app"
+path = "./src/lib.rs"
+
 [dependencies]
 sm-entity = { path = "../entity" }
+sm-migration = { path = "../migration" }
 actix-web = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
