@@ -8,8 +8,4 @@ sm-entity = { path = "../entity" }
 actix-web = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-deadpool-postgres = { workspace = true }
-tokio-postgres = { workspace = true }
-tokio-pg-mapper = { workspace = true }
-tokio-pg-mapper-derive = { workspace = true }
 sea-orm = { workspace = true }

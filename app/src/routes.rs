@@ -1,9 +1,8 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
-use deadpool_postgres::Pool;
 use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait};
 use serde::{Deserialize, Serialize};
+use crate::AppState;
 use serde_json::json;
-
 use sm_entity::user;
 
 
@@ -15,7 +14,8 @@ pub struct GetUserArgs {
 
 #[allow(unused_variables)]
 #[get("/user")]
-pub async fn get_user(args: web::Query<GetUserArgs>, db_pool: web::Data<Pool>) -> impl Responder {
+pub async fn get_user(app_state: web::Data<AppState>, args: web::Query<GetUserArgs>) -> impl Responder {
+    let db_client = &app_state.db_client;
     let user_id = args.id;
     match user_id {
         Some(user_id) => {
@@ -40,7 +40,8 @@ pub struct CreateUserArgs {
 
 #[allow(unused_variables, unreachable_code)]
 #[post("/user")]
-pub async fn create_user(user_args: web::Json<CreateUserArgs>, db_pool: web::Data<Pool>) -> impl Responder {
+pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<CreateUserArgs>) -> impl Responder {
+    let db_client = &app_state.db_client;
     let name = &user_args.name;
     let pass = &user_args.pass;
     match (name, pass) {

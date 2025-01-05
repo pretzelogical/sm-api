@@ -1,22 +1,27 @@
 use actix_web::{web, App, HttpServer};
-use tokio_postgres::NoTls;
+use sea_orm::DatabaseConnection;
 use crate::routes::{get_user, create_user};
-use crate::conf::pg_conf;
+use crate::conf::db_conf;
 
 mod conf;
 mod routes;
 
+#[derive(Debug, Clone)]
+pub struct AppState {
+    pub db_client: DatabaseConnection
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let config = pg_conf();
-    let pool = config.create_pool(None, NoTls).unwrap();
+    let db_client = db_conf().await.unwrap();
+    let app_state = AppState { db_client };
     let server = HttpServer::new(move || {
-        App::new().app_data(web::Data::new(pool.clone()))
+        App::new().app_data(web::Data::new(app_state.clone()))
             .service(create_user)
             .service(get_user)
     })
-    .bind(("127.0.0.1", 8080))?
-    .run();
+        .bind(("127.0.0.1", 8080))?
+        .run();
 
     server.await
 }
