@@ -1,7 +1,7 @@
 use actix_web::{web, App, HttpServer};
 use sea_orm::DatabaseConnection;
 use sm_migration::{Migrator, MigratorTrait};
-use crate::routes::{get_user, create_user};
+use crate::routes::user::{get_user, create_user};
 use crate::conf::db_conf;
 
 mod conf;
