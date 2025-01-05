@@ -35,7 +35,8 @@ pub async fn get_post(app_state: web::Data<AppState>, args: web::Query<GetPostAr
                     .json(JsonError::from("post not found")),
                 Err(AppError::DbError(err)) => HttpResponse::InternalServerError()
                     .json(JsonError::from(err)),
-                _ => HttpResponse::InternalServerError().finish()
+                _ => HttpResponse::InternalServerError()
+                    .json(JsonError::from("could not find post"))
             }
         },
         None => HttpResponse::BadRequest()
@@ -44,7 +45,7 @@ pub async fn get_post(app_state: web::Data<AppState>, args: web::Query<GetPostAr
 }
 
 #[derive(Debug, Deserialize)]
-struct CreatePostArgs {
+pub struct CreatePostArgs {
     pub title: Option<String>,
     pub content: Option<String>,
     // pub author_name: Option<String>,
