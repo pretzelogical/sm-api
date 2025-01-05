@@ -2762,6 +2762,7 @@ dependencies = [
  "async-std",
  "sea-orm",
  "sea-orm-migration",
+ "sm-entity",
 ]
 
 [[package]]
