@@ -3,7 +3,16 @@ name = "sm-api"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+  "app",
+  "entity"
+]
+
 [dependencies]
+sm-app = { path = "./app" }
+
+[workspace.dependencies]
 actix-web = "4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

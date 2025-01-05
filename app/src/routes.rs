@@ -4,7 +4,7 @@ use sea_orm::{ActiveModelTrait, ActiveValue, EntityTrait};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::models::user;
+use sm_entity::user;
 
 
 #[derive(Deserialize)]
