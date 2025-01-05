@@ -6,6 +6,7 @@ use crate::conf::db_conf;
 
 mod conf;
 mod routes;
+mod error;
 
 #[derive(Debug, Clone)]
 struct AppState {

@@ -1,11 +1,12 @@
+use actix_web::web::Json;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
 use crate::AppState;
+use crate::error::{AppError, JsonError};
 use serde_json::json;
 use sm_entity::user;
 
-type JsonError = serde_json::Value;
 
 #[derive(Deserialize)]
 pub struct GetUserArgs {
@@ -13,7 +14,7 @@ pub struct GetUserArgs {
     // pub name: String,
 }
 
-async fn get_by_id(user_id: i64, db_client: &DatabaseConnection) -> Result<user::Model, JsonError> {
+async fn get_by_id(user_id: i64, db_client: &DatabaseConnection) -> Result<user::Model, AppError> {
     let db_res = user::Entity::find_by_id(user_id)
         .one(db_client)
         .await;
@@ -21,10 +22,10 @@ async fn get_by_id(user_id: i64, db_client: &DatabaseConnection) -> Result<user:
         Ok(user) => {
             match user {
                 Some(user) => Ok(user),
-                None => Err(json!({ "error": "could not find user" }))
+                None => Err(AppError::NotFound)
             }
         }
-        Err(_) => Err(json!({ "error": "database error" }))
+        Err(err) => Err(AppError::DbError(err))
     }
 }
 
@@ -37,10 +38,16 @@ pub async fn get_user(app_state: web::Data<AppState>, args: web::Query<GetUserAr
             let user = get_by_id(user_id, db_client).await;
             match user {
                 Ok(user) => HttpResponse::Ok().json(user),
-                Err(e) => HttpResponse::InternalServerError().json(e)
+                Err(AppError::NotFound) => HttpResponse::NotFound()
+                    .json(JsonError::from("user not found")),
+                Err(AppError::DbError(err)) => HttpResponse::InternalServerError()
+                    .json(JsonError::from(err)),
+                Err(AppError::BadRequest) => HttpResponse::InternalServerError()
+                    .json(JsonError::from("cannot find user"))
             }
         },
-        None => HttpResponse::BadRequest().json(json!({ "error": "'id' field missing"}))
+        None => HttpResponse::BadRequest()
+            .json(JsonError::from("missing 'id' field"))
     }
 }
 
