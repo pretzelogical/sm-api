@@ -9,8 +9,8 @@ mod routes;
 mod error;
 
 #[derive(Debug, Clone)]
-struct AppState {
-    db_client: DatabaseConnection
+pub struct AppState {
+    pub db_client: DatabaseConnection
 }
 
 #[actix_web::main]

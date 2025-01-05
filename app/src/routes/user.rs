@@ -1,4 +1,3 @@
-use actix_web::web::Json;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait};
 use serde::{Deserialize, Serialize};
