@@ -29,7 +29,7 @@ impl Related<super::post::Entity> for Entity {
 
 impl Related<super::comment::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Post.def()
+        Relation::Comment.def()
     }
 }
 

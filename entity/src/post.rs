@@ -20,12 +20,20 @@ pub enum Relation {
         from = "Column::AuthorId",
         to = "super::user::Column::Id"
     )]
-    User
+    User,
+    #[sea_orm( has_many = "super::comment::Entity" )]
+    Comment
 }
 
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
+    }
+}
+
+impl Related<super::comment::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Comment.def()
     }
 }
 

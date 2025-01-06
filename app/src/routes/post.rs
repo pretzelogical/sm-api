@@ -1,5 +1,5 @@
 use crate::routes::prelude::*;
-use sea_orm::{QueryFilter, QueryOrder, QuerySelect};
+use sea_orm::{ModelTrait, QueryFilter, QueryOrder, QuerySelect};
 
 #[derive(Deserialize)]
 pub struct GetPostArgs {
@@ -8,11 +8,50 @@ pub struct GetPostArgs {
     pub limit: Option<u64>,
 }
 
-async fn get_by_id(post_id: i64, db_client: &DatabaseConnection) -> Result<post::Model, AppError> {
+#[derive(Serialize)]
+pub struct GetPostResponseItem {
+    pub post: sm_entity::post::Model,
+    pub comment: Option<Vec<sm_entity::comment::Model>>,
+}
+
+async fn _get_comments(
+    post: &sm_entity::post::Model,
+    db_client: &DatabaseConnection,
+) -> Result<Option<Vec<sm_entity::comment::Model>>, AppError> {
+    match post
+        .find_related(sm_entity::comment::Entity)
+        .all(db_client)
+        .await
+    {
+        Ok(comments) => {
+            if comments.len() > 0 {
+                Ok(Some(comments))
+            } else {
+                Ok(None)
+            }
+        }
+        Err(error) => Err(AppError::DbError(AppDbError::from(error))),
+    }
+}
+
+async fn get_by_id(
+    post_id: i64,
+    db_client: &DatabaseConnection,
+) -> Result<GetPostResponseItem, AppError> {
     let db_res = post::Entity::find_by_id(post_id).one(db_client).await;
     match db_res {
         Ok(post) => match post {
-            Some(post) => Ok(post),
+            Some(post) => {
+                Ok(GetPostResponseItem {
+                    comment: match _get_comments(&post, db_client).await {
+                        Ok(comment) => comment,
+                        Err(error) => {
+                            println!("uncaught db error {:#?}", error);
+                            None
+                        }
+                    },
+                    post: post,
+            })},
             None => Err(AppError::NotFound("post not found")),
         },
         Err(err) => Err(AppError::DbError(AppDbError::from(err))),
@@ -23,7 +62,7 @@ async fn get_by_author_id(
     author_id: i64,
     limit: u64,
     db_client: &DatabaseConnection,
-) -> Result<Vec<post::Model>, AppError> {
+) -> Result<Vec<GetPostResponseItem>, AppError> {
     let db_res = post::Entity::find()
         .filter(post::Column::AuthorId.eq(author_id))
         .order_by_asc(post::Column::AuthorId)
@@ -31,7 +70,25 @@ async fn get_by_author_id(
         .all(db_client)
         .await;
     match db_res {
-        Ok(posts) => Ok(posts),
+        Ok(posts) => {
+            let mut item_vec = Vec::with_capacity(posts.len());
+            for post in posts {
+                let comment = _get_comments(&post, db_client).await;
+                if let Ok(comment) = comment {
+                    item_vec.push(GetPostResponseItem {
+                        post: post,
+                        comment: comment
+                    });
+                } else if let Err(error) = comment {
+                    println!("uncaught db error {:#?}", error);
+                    item_vec.push(GetPostResponseItem {
+                        post: post,
+                        comment: None
+                    });
+                }
+            }
+            Ok(item_vec)
+        }
         Err(err) => Err(AppError::DbError(AppDbError::from(err))),
     }
 }
@@ -110,7 +167,7 @@ pub async fn create_post(
                 Ok(post) => HttpResponse::Ok().json(post),
                 Err(err) => err.into(),
             }
-        },
+        }
         _ => AppError::InternalError("error creating user").into(),
     }
 }
