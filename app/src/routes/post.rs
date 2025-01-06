@@ -16,7 +16,7 @@ async fn get_by_id(post_id: i64, db_client: &DatabaseConnection) -> Result<post:
         Ok(post) => {
             match post {
                 Some(post) => Ok(post),
-                None => Err(AppError::NotFound(Some("post not found")))
+                None => Err(AppError::NotFound("post not found"))
             }
         },
         Err(err) => Err(AppError::DbError(AppDbError::from(err)))
@@ -34,7 +34,7 @@ pub async fn get_post(app_state: web::Data<AppState>, args: web::Query<GetPostAr
                 Err(err) => err.into()
             }
         },
-        None => AppError::BadRequest(Some("Missing 'id' field")).into()
+        None => AppError::BadRequest("Missing 'id' field").into()
     }
 }
 
@@ -79,6 +79,6 @@ pub async fn create_post(app_state: web::Data<AppState>, args: web::Json<CreateP
                 Err(err) => err.into()
             }
         },
-        _ => AppError::InternalError(Some("error creating user")).into()
+        _ => AppError::InternalError("error creating user").into()
     }
 }

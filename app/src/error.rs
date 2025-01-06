@@ -82,9 +82,9 @@ impl From<&'static str> for AppDbError {
 #[derive(Debug)]
 pub enum AppError {
     DbError(AppDbError),
-    BadRequest(Option<&'static str>),
-    NotFound(Option<&'static str>),
-    InternalError(Option<&'static str>)
+    BadRequest(&'static str),
+    NotFound(&'static str),
+    InternalError(&'static str)
 }
 
 impl Into<HttpResponse> for AppError {
@@ -103,29 +103,18 @@ impl Into<HttpResponse> for AppError {
                             .json(JsonError::from(err))
                     },
                     (None, None) => {
+                        println!("DbError has no message or DbErr, this should not happen!");
                         HttpResponse::InternalServerError()
                             .json(JsonError::from("Database error"))
                     },
                 }
             },
-            AppError::BadRequest(message) => match message {
-                Some(message) => HttpResponse::BadRequest()
-                    .json(JsonError::from(message)),
-                None => HttpResponse::BadRequest()
-                    .json(JsonError::from("Bad request")),
-            },
-            AppError::NotFound(message) => match message {
-                Some(message) => HttpResponse::NotFound()
-                    .json(JsonError::from(message)),
-                None => HttpResponse::NotFound()
-                    .json(JsonError::from("Not found"))
-            },
-            AppError::InternalError(message) => match message {
-                Some(message) => HttpResponse::InternalServerError()
-                    .json(JsonError::from(message)),
-                None => HttpResponse::InternalServerError()
-                    .json(JsonError::from("Internal server error"))
-            }
+            AppError::BadRequest(message) => HttpResponse::BadRequest()
+                .json(JsonError::from(message)),
+            AppError::NotFound(message) => HttpResponse::NotFound()
+                .json(JsonError::from(message)),
+            AppError::InternalError(message) => HttpResponse::InternalServerError()
+            .json(JsonError::from(message))
         }
     }
 }

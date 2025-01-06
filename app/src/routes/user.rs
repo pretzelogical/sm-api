@@ -15,7 +15,7 @@ async fn get_by_id(user_id: i64, db_client: &DatabaseConnection) -> Result<user:
         Ok(user) => {
             match user {
                 Some(user) => Ok(user),
-                None => Err(AppError::NotFound(Some("user not found")))
+                None => Err(AppError::NotFound("user not found"))
             }
         }
         Err(err) => Err(AppError::DbError(AppDbError::from(err)))
@@ -34,7 +34,7 @@ pub async fn get_user(app_state: web::Data<AppState>, args: web::Query<GetUserAr
                 Err(error) => error.into()
             }
         },
-        None => AppError::BadRequest(Some("Missing 'id' field")).into()
+        None => AppError::BadRequest("Missing 'id' field").into()
     }
 }
 
@@ -66,7 +66,7 @@ pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<Cr
             }
         },
         (None, _) | (_, None) => {
-            AppError::BadRequest(Some("'name' or 'pass' field missing")).into()
+            AppError::BadRequest("'name' or 'pass' field missing").into()
         }
     }
 }
