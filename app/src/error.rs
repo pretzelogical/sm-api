@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, Responder};
+use actix_web::HttpResponse;
 use sea_orm::DbErr;
 use serde::{Serialize, Deserialize};
 
@@ -8,14 +8,6 @@ pub struct JsonError {
     pub error: String
 }
 
-
-impl JsonError {
-    pub fn new(error: String) -> JsonError {
-        JsonError {
-            error
-        }
-    }
-}
 
 impl From<String> for JsonError {
     fn from(error: String) -> JsonError {
