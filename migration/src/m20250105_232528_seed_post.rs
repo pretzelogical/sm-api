@@ -12,8 +12,38 @@ impl MigrationTrait for Migration {
         sm_entity::post::ActiveModel {
             id: Set(1),
             author_id: Set(1),
-            title: Set("Test post".to_owned()),
+            title: Set("Test post 1".to_owned()),
             content: Set("Test post content :3:3:3".to_owned())
+        }
+        .insert(db)
+        .await
+        .unwrap();
+
+        sm_entity::post::ActiveModel {
+            id: Set(2),
+            author_id: Set(1),
+            title: Set("Test post 2".to_owned()),
+            content: Set("ashdsajd".to_owned())
+        }
+        .insert(db)
+        .await
+        .unwrap();
+
+        sm_entity::post::ActiveModel {
+            id: Set(3),
+            author_id: Set(1),
+            title: Set("Test post 3".to_owned()),
+            content: Set("funni".to_owned())
+        }
+        .insert(db)
+        .await
+        .unwrap();
+
+        sm_entity::post::ActiveModel {
+            id: Set(4),
+            author_id: Set(1),
+            title: Set("Test post 4".to_owned()),
+            content: Set("haha".to_owned())
         }
         .insert(db)
         .await
@@ -25,14 +55,17 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        let post = sm_entity::post::Entity::find_by_id(1)
-            .one(db)
-            .await?;
-        if let Some(post) = post {
-            post.delete(db).await?;
-        } else {
-            panic!("Cannot find seeded post");
+        for i in 1..=4 {
+            let post = sm_entity::post::Entity::find_by_id(i)
+                .one(db)
+                .await?;
+            if let Some(post) = post {
+                post.delete(db).await?;
+            } else {
+                panic!("Cannot find seeded post");
+            }
         }
+
         Ok(())
     }
 }
