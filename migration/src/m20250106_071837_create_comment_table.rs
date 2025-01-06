@@ -13,14 +13,14 @@ impl MigrationTrait for Migration {
 
         manager
             .create_table(
-                schema.create_table_from_entity(sm_entity::post::Entity)
+                schema.create_table_from_entity(sm_entity::comment::Entity)
             )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(sm_entity::post::Entity).to_owned())
+            .drop_table(Table::drop().table(sm_entity::comment::Entity).to_owned())
             .await
     }
 }

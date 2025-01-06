@@ -4,6 +4,7 @@ mod m20220101_000001_create_table;
 mod m20250105_080123_seed_user;
 mod m20250105_223608_create_post_table;
 mod m20250105_232528_seed_post;
+mod m20250106_071837_create_comment_table;
 
 pub struct Migrator;
 
@@ -15,6 +16,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250105_080123_seed_user::Migration),
             Box::new(m20250105_223608_create_post_table::Migration),
             Box::new(m20250105_232528_seed_post::Migration),
+            Box::new(m20250106_071837_create_comment_table::Migration),
         ]
     }
 }
