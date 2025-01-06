@@ -2,7 +2,7 @@ use actix_web::{web, App, HttpServer};
 use sea_orm::DatabaseConnection;
 use sm_migration::{Migrator, MigratorTrait};
 use crate::routes::user::{get_user, create_user};
-use crate::routes::post::{get_post, create_post};
+use crate::routes::post::{get_post, create_post, get_comments};
 use crate::conf::db_conf;
 
 mod conf;
@@ -26,6 +26,7 @@ async fn start() -> std::io::Result<()> {
             .service(get_user)
             .service(create_post)
             .service(get_post)
+            .service(get_comments)
     })
         .bind(("127.0.0.1", 8080))?
         .run();

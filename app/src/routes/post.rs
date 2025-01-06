@@ -16,12 +16,19 @@ pub struct GetPostResponseItem {
 async fn _get_comments(
     post: &sm_entity::post::Model,
     db_client: &DatabaseConnection,
+    limit: Option<u64>,
 ) -> Result<Option<Vec<sm_entity::comment::Model>>, AppError> {
-    match post
-        .find_related(sm_entity::comment::Entity)
-        .all(db_client)
-        .await
-    {
+    let comments = if let Some(limit) = limit {
+        post.find_related(sm_entity::comment::Entity)
+            .limit(limit)
+            .all(db_client)
+            .await
+    } else {
+        post.find_related(sm_entity::comment::Entity)
+            .all(db_client)
+            .await
+    };
+    match comments {
         Ok(comments) => {
             if comments.len() > 0 {
                 Ok(Some(comments))
@@ -31,6 +38,20 @@ async fn _get_comments(
         }
         Err(error) => Err(AppError::DbError(AppDbError::from(error))),
     }
+    // match post
+    //     .find_related(sm_entity::comment::Entity)
+    //     .all(db_client)
+    //     .await
+    // {
+    //     Ok(comments) => {
+    //         if comments.len() > 0 {
+    //             Ok(Some(comments))
+    //         } else {
+    //             Ok(None)
+    //         }
+    //     }
+    //     Err(error) => Err(AppError::DbError(AppDbError::from(error))),
+    // }
 }
 
 async fn get_by_id(
@@ -40,17 +61,16 @@ async fn get_by_id(
     let db_res = post::Entity::find_by_id(post_id).one(db_client).await;
     match db_res {
         Ok(post) => match post {
-            Some(post) => {
-                Ok(GetPostResponseItem {
-                    comment: match _get_comments(&post, db_client).await {
-                        Ok(comment) => comment,
-                        Err(error) => {
-                            println!("uncaught db error {:#?}", error);
-                            None
-                        }
-                    },
-                    post: post,
-            })},
+            Some(post) => Ok(GetPostResponseItem {
+                comment: match _get_comments(&post, db_client, None).await {
+                    Ok(comment) => comment,
+                    Err(error) => {
+                        println!("uncaught db error {:#?}", error);
+                        None
+                    }
+                },
+                post: post,
+            }),
             None => Err(AppError::NotFound("post not found")),
         },
         Err(err) => Err(AppError::DbError(AppDbError::from(err))),
@@ -72,17 +92,17 @@ async fn get_by_author_id(
         Ok(posts) => {
             let mut item_vec = Vec::with_capacity(posts.len());
             for post in posts {
-                let comment = _get_comments(&post, db_client).await;
+                let comment = _get_comments(&post, db_client, None).await;
                 if let Ok(comment) = comment {
                     item_vec.push(GetPostResponseItem {
                         post: post,
-                        comment: comment
+                        comment: comment,
                     });
                 } else if let Err(error) = comment {
                     println!("uncaught db error {:#?}", error);
                     item_vec.push(GetPostResponseItem {
                         post: post,
-                        comment: None
+                        comment: None,
                     });
                 }
             }
@@ -168,5 +188,28 @@ pub async fn create_post(
             }
         }
         _ => AppError::InternalError("error creating user").into(),
+    }
+}
+
+#[derive(Deserialize)]
+pub struct GetCommentsArgs {
+    pub limit: Option<u64>,
+}
+
+#[get("/post/{id}/comment")]
+pub async fn get_comments(
+    app_state: web::Data<AppState>,
+    post_id: web::Path<i64>,
+    args: web::Query<GetCommentsArgs>,
+) -> impl Responder {
+    let post = sm_entity::post::Entity::
+        find_by_id(post_id.into_inner()).one(&app_state.db_client).await;
+    if let Ok(Some(post)) = post {
+        match _get_comments(&post, &app_state.db_client, args.limit).await {
+            Ok(Some(comments)) => HttpResponse::Ok().json(comments),
+            _ => AppError::NotFound("comment not found").into()
+        }
+    } else {
+        AppError::NotFound("comment not found").into()
     }
 }
