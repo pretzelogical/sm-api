@@ -76,7 +76,8 @@ pub enum AppError {
     DbError(AppDbError),
     BadRequest(&'static str),
     NotFound(&'static str),
-    InternalError(&'static str)
+    InternalError(&'static str),
+    Unauthorized(&'static str)
 }
 
 impl Into<HttpResponse> for AppError {
@@ -106,6 +107,8 @@ impl Into<HttpResponse> for AppError {
             AppError::NotFound(message) => HttpResponse::NotFound()
                 .json(JsonError::from(message)),
             AppError::InternalError(message) => HttpResponse::InternalServerError()
+            .json(JsonError::from(message)),
+            AppError::Unauthorized(message) => HttpResponse::Unauthorized()
             .json(JsonError::from(message))
         }
     }
