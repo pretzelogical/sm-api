@@ -9,7 +9,6 @@ pub struct GetUserArgs {
 }
 
 
-#[get("/user")]
 pub async fn get_user(app_state: web::Data<AppState>, args: web::Query<GetUserArgs>) -> impl Responder {
     let db_client = &app_state.db_client;
     match (args.id, &args.name) {
@@ -38,7 +37,7 @@ pub struct CreateUserArgs {
     pub pass: Option<String>
 }
 
-#[post("/user")]
+
 pub async fn create_user(app_state: web::Data<AppState>, user_args: web::Json<CreateUserArgs>) -> impl Responder {
     let db_client = &app_state.db_client;
     let name = &user_args.name;

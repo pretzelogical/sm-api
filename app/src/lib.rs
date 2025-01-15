@@ -1,3 +1,4 @@
+use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, App, HttpServer};
 use sea_orm::DatabaseConnection;
 use sm_migration::{Migrator, MigratorTrait};
@@ -23,12 +24,21 @@ async fn start() -> std::io::Result<()> {
     let app_state = AppState { db_client };
     let server = HttpServer::new(move || {
         App::new().app_data(web::Data::new(app_state.clone()))
-            .service(create_user)
-            .service(get_user)
-            .service(create_post)
-            .service(get_post)
-            .service(create_comment)
-            .service(get_comments)
+            .service(
+                web::resource("/user")
+                    .route(web::get().to(get_user))
+                    .route(web::post().to(create_user))
+            )
+            .service(
+                web::resource("/post")
+                    .route(web::get().to(get_post))
+                    .route(web::post().to(create_post))
+            )
+            .service(
+                web::resource("/post/{id}/comment")
+                    .route(web::get().to(get_comments))
+                    .route(web::post().to(create_comment))
+            )
     })
         .bind(("127.0.0.1", 8080))?
         .run();
