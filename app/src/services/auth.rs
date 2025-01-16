@@ -1,4 +1,4 @@
-use sea_orm::{DatabaseConnection};
+use sea_orm::DatabaseConnection;
 use serde::{Serialize, Deserialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -39,50 +39,57 @@ fn exp() -> Result<Duration, AppError> {
 
 
 // Creates a jwt that logs the user in for 7 days
-pub fn create_auth_token(user: sm_entity::user::Model) -> Result<String, AppError>  {
-    match now() {
-        Ok(now) => {
-            // Token expires in 7 days
-            let exp = now + Duration::from_secs(7 * 24 * 60 * 60);
-            match encode(
-                &Header::default(),
-                &AuthClaims {
-                    sub: user.id,
-                    exp: exp.as_secs_f64()
-                },
-                &EncodingKey::from_secret(DEV_SECRET.as_ref())
-            ) {
-                Ok(jwt) => Ok(jwt),
-                Err(_) => Err(AppError::InternalError(JWT_CREATE_ERR))
-            }
-        }
-        Err(err) => Err(err)
+pub fn create_auth_token(user: &sm_entity::user::Model) -> Result<String, AppError>  {
+    let exp = exp()?;
+    match encode(
+        &Header::default(),
+        &AuthClaims {
+            sub: user.id,
+            exp: exp.as_secs_f64()
+        },
+        &EncodingKey::from_secret(DEV_SECRET.as_ref())
+    ) {
+        Ok(jwt) => Ok(jwt),
+        Err(_) => Err(AppError::InternalError(JWT_CREATE_ERR))
     }
 }
 
 
+// Checks if the token is valid
 pub async fn check_auth_token(token: String, db_client: &DatabaseConnection) -> Result<sm_entity::user::Model, AppError> {
-    match now() {
-        Ok(now) => {
-            match decode::<AuthClaims>(
-                &token,
-                &DecodingKey::from_secret(DEV_SECRET.as_ref()),
-                &Validation::new(Algorithm::HS256)
-            ) {
-                Ok(claims) => {
-                    let user_exp = claims.claims.exp;
-                    let user_id = claims.claims.sub;
-                    if now.as_secs_f64() > user_exp {
-                        return Err(AppError::Unauthorized("Token expired"));
-                    }
-                    match services::user::get_by_id(user_id, db_client).await {
-                        Ok(user) => Ok(user),
-                        Err(err) => Err(err)
-                    }
-                },
-                Err(_) => Err(AppError::InternalError(JWT_CHECK_ERR))
+    let now = now()?;
+
+    match decode::<AuthClaims>(
+        &token,
+        &DecodingKey::from_secret(DEV_SECRET.as_ref()),
+        &Validation::new(Algorithm::HS256)
+    ) {
+        Ok(claims) => {
+            let user_exp = claims.claims.exp;
+            let user_id = claims.claims.sub;
+            if now.as_secs_f64() > user_exp {
+                return Err(AppError::Unauthorized("Token expired"));
+            }
+            match services::user::get_by_id(user_id, db_client).await {
+                Ok(user) => Ok(user),
+                Err(err) => Err(err)
             }
         },
         Err(_) => Err(AppError::InternalError(JWT_CHECK_ERR))
     }
+}
+
+// Logs in a user with username and password and returns the user and a jwt
+pub async fn login_user(user_name: &String, user_password: &String, db_client: &DatabaseConnection) -> Result<(sm_entity::user::Model, String), AppError> {
+    let user = services::user::get_by_login(user_name, user_password, db_client).await?;
+    let token = create_auth_token(&user)?;
+    Ok((user, token))
+}
+
+
+// Creates a new user with username and password and returns the user and a jwt
+pub async fn create_user(user_name: &String, user_password: &String, db_client: &DatabaseConnection) -> Result<(sm_entity::user::Model, String), AppError> {
+    let user = services::user::new_user(user_name, user_password, db_client).await?;
+    let token = create_auth_token(&user)?;
+    Ok((user, token))
 }

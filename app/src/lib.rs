@@ -1,9 +1,9 @@
-use actix_web::dev::HttpServiceFactory;
 use actix_web::{web, App, HttpServer};
 use sea_orm::DatabaseConnection;
 use sm_migration::{Migrator, MigratorTrait};
-use crate::routes::user::{get_user, create_user};
+use crate::routes::user::get_user;
 use crate::routes::post::{get_post, create_post, get_comments, create_comment};
+use crate::routes::auth::{check_auth, log_in, register};
 use crate::conf::db_conf;
 
 mod conf;
@@ -25,9 +25,20 @@ async fn start() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new().app_data(web::Data::new(app_state.clone()))
             .service(
+                web::resource("/auth")
+                    .route(web::get().to(check_auth))
+            )
+            .service(
+                web::resource("/auth/login")
+                    .route(web::post().to(log_in))
+            )
+            .service(
+                web::resource("/auth/register")
+                    .route(web::post().to(register))
+            )
+            .service(
                 web::resource("/user")
                     .route(web::get().to(get_user))
-                    .route(web::post().to(create_user))
             )
             .service(
                 web::resource("/post")
