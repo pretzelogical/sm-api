@@ -56,7 +56,7 @@ pub fn create_auth_token(user: &sm_entity::user::Model) -> Result<String, AppErr
 
 
 // Checks if the token is valid
-pub async fn check_auth_token(token: String, db_client: &DatabaseConnection) -> Result<sm_entity::user::Model, AppError> {
+pub async fn check_auth_token(token: &String, db_client: &DatabaseConnection) -> Result<sm_entity::user::Model, AppError> {
     let now = now()?;
 
     match decode::<AuthClaims>(

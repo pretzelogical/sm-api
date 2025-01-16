@@ -1,7 +1,33 @@
 use actix_web::HttpRequest;
+use serde::Serialize;
 
 use crate::routes::prelude::*;
 use crate::services;
+
+#[derive(Serialize)]
+pub struct AuthUserResponse {
+    pub id: i64,
+    pub name: String
+}
+
+#[derive(Serialize)]
+pub struct AuthResponse {
+    pub token: String,
+    pub user: AuthUserResponse
+}
+
+
+impl AuthResponse {
+    pub fn new(token: String, user: sm_entity::user::Model) -> AuthResponse {
+        AuthResponse {
+            token: token,
+            user: AuthUserResponse {
+                id: user.id,
+                name: user.name
+            }
+        }
+    }
+}
 
 
 // Check if user is session authenticated
@@ -11,9 +37,9 @@ pub async fn check_auth(app_state: web::Data<AppState>, args: HttpRequest) -> im
         Some(token) => token.to_str().unwrap().to_string().replace("Bearer ", ""),
         None => return AppError::Unauthorized("Token missing").into()
     };
-    match services::auth::check_auth_token(token, db_client).await {
+    match services::auth::check_auth_token(&token, db_client).await {
         Ok(user) => {
-            HttpResponse::Ok().json(user)
+            HttpResponse::Ok().json(AuthResponse::new(token, user))
         },
         Err(err) => return err.into()
     }
@@ -30,8 +56,8 @@ pub struct AuthArgs {
 pub async fn log_in(app_state: web::Data<AppState>, args: web::Json<AuthArgs>) -> impl Responder {
     let db_client = &app_state.db_client;
     match services::auth::login_user(&args.username, &args.password, db_client).await {
-        Ok((_, token)) => {
-            HttpResponse::Ok().json(token)
+        Ok((user, token)) => {
+            HttpResponse::Ok().json(AuthResponse::new(token, user))
         },
         Err(err) => return err.into()
     }
@@ -42,8 +68,8 @@ pub async fn log_in(app_state: web::Data<AppState>, args: web::Json<AuthArgs>) -
 pub async fn register(app_state: web::Data<AppState>, args: web::Json<AuthArgs>) -> impl Responder {
     let db_client = &app_state.db_client;
     match services::auth::create_user(&args.username, &args.password, db_client).await {
-        Ok((_, token)) => {
-            HttpResponse::Ok().json(token)
+        Ok((user, token)) => {
+            HttpResponse::Ok().json(AuthResponse::new(token, user))
         },
         Err(err) => return err.into()
     }
