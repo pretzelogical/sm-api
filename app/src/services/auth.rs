@@ -1,3 +1,7 @@
+use actix_web::body::MessageBody;
+use actix_web::dev::{ServiceRequest, ServiceResponse};
+use actix_web::middleware::Next;
+use actix_web::{Error, HttpResponse};
 use sea_orm::DatabaseConnection;
 use serde::{Serialize, Deserialize};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -54,6 +58,26 @@ pub fn create_auth_token(user: &sm_entity::user::Model) -> Result<String, AppErr
     }
 }
 
+fn is_token_expired(token: &String) -> Result<bool, AppError> {
+    let now = now()?;
+
+    match decode::<AuthClaims>(
+        &token,
+        &DecodingKey::from_secret(DEV_SECRET.as_ref()),
+        &Validation::new(Algorithm::HS256)
+    ) {
+        Ok(claims) => {
+            let user_exp = claims.claims.exp;
+            if now.as_secs_f64() > user_exp {
+                Ok(true)
+            } else {
+                Ok(false)
+            }
+        },
+        Err(_) => Err(AppError::InternalError("Unable to decode token"))
+    }
+}
+
 
 // Checks if the token is valid
 pub async fn check_auth_token(token: &String, db_client: &DatabaseConnection) -> Result<sm_entity::user::Model, AppError> {
@@ -92,4 +116,32 @@ pub async fn create_user(user_name: &String, user_password: &String, db_client: 
     let user = services::user::new_user(user_name, user_password, db_client).await?;
     let token = create_auth_token(&user)?;
     Ok((user, token))
+}
+
+pub async fn auth_middleware(
+    req: ServiceRequest,
+    next: Next<impl MessageBody>
+) -> Result<ServiceResponse<impl MessageBody>, Error> {
+    let http_req = req.into_parts().0;
+    let token = match http_req.headers().get("Authorization") {
+        Some(header) => {
+            header.to_str().unwrap().to_string().replace("Bearer ", "")
+        },
+        None => return Ok(ServiceResponse::new(http_req, HttpResponse::Unauthorized().finish()))
+    };
+    match is_token_expired(&token) {
+        Ok(is_exp) => {
+            if is_exp {
+                return Ok(ServiceResponse::new(http_req, AppError::Unauthorized("session expired").into()))
+            } else {
+                match next.call(req).await {
+                    Ok(res) => {
+                        Ok(res)
+                    },
+                    Err(err) => Err(err)
+                }
+            }
+        },
+        Err(err) => Ok(ServiceResponse::new(http_req, err.into()))
+    }
 }
