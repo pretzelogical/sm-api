@@ -15,3 +15,4 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sea-orm = { workspace = true }
 jsonwebtoken = "9.3.0"
+futures-util = "0.3.31"

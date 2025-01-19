@@ -10,6 +10,7 @@ mod conf;
 mod routes;
 mod error;
 mod services;
+mod middleware;
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -44,6 +45,7 @@ async fn start() -> std::io::Result<()> {
                 web::resource("/post")
                     .route(web::get().to(get_post))
                     .route(web::post().to(create_post))
+                    .wrap(middleware::auth::Auth)
             )
             .service(
                 web::resource("/post/{id}/comment")
