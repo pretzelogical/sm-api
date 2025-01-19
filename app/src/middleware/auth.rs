@@ -58,6 +58,11 @@ where
                 .to_string()
                 .replace("Bearer ", "");
             println!("Token: {:#?}", token);
+            if let Ok(result) = crate::services::auth::is_token_expired(&token) {
+                println!("User authenticated: {:#?}", result);
+            } else {
+                println!("Could not check token.")
+            }
         } else {
             println!("No auth :(");
         }
