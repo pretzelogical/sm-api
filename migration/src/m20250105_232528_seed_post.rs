@@ -13,7 +13,8 @@ impl MigrationTrait for Migration {
             id: Set(1),
             author_id: Set(1),
             title: Set("Test post 1".to_owned()),
-            content: Set("Test post content :3:3:3".to_owned())
+            content: Set("Test post content :3:3:3".to_owned()),
+            img: Set(Some("https://placehold.co/600x500".to_owned()))
         }
         .insert(db)
         .await
@@ -23,7 +24,8 @@ impl MigrationTrait for Migration {
             id: Set(2),
             author_id: Set(1),
             title: Set("Test post 2".to_owned()),
-            content: Set("ashdsajd".to_owned())
+            content: Set("ashdsajd".to_owned()),
+            img: Set(Some("https://placehold.co/600x500".to_owned()))
         }
         .insert(db)
         .await
@@ -33,7 +35,8 @@ impl MigrationTrait for Migration {
             id: Set(3),
             author_id: Set(1),
             title: Set("Test post 3".to_owned()),
-            content: Set("funni".to_owned())
+            content: Set("funni".to_owned()),
+            img: Set(None)
         }
         .insert(db)
         .await
@@ -43,7 +46,8 @@ impl MigrationTrait for Migration {
             id: Set(4),
             author_id: Set(1),
             title: Set("Test post 4".to_owned()),
-            content: Set("haha".to_owned())
+            content: Set("haha".to_owned()),
+            img: Set(None)
         }
         .insert(db)
         .await

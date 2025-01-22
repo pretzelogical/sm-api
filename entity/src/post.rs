@@ -11,6 +11,7 @@ pub struct Model {
     pub author_id: i64,
     pub title: String,
     pub content: String,
+    pub img: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

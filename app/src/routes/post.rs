@@ -1,5 +1,6 @@
 use crate::routes::prelude::*;
 use crate::services;
+use actix_multipart::form::{json::Json as MpJson, bytes::Bytes as MpBytes, MultipartForm};
 
 #[derive(Deserialize)]
 pub struct GetPostArgs {
@@ -44,25 +45,27 @@ pub async fn get_post(
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePostArgs {
-    pub title: Option<String>,
-    pub content: Option<String>,
+    pub title: String,
+    pub content: String,
     // pub author_name: Option<String>,
-    pub author_id: Option<i64>,
+    pub author_id: i64,
+}
+
+#[derive(Debug, MultipartForm)]
+pub struct CreatePostForm {
+    #[multipart(limit = "30MB")]
+    pub img: Option<MpBytes>,
+    pub post: MpJson<CreatePostArgs>,
 }
 
 
 pub async fn create_post(
     app_state: web::Data<AppState>,
-    args: web::Json<CreatePostArgs>,
+    MultipartForm(form): MultipartForm<CreatePostForm>,
 ) -> impl Responder {
-    match (&args.title, &args.content, &args.author_id) {
-        (Some(title), Some(content), Some(author_id)) => {
-            match services::post::create_post(title, content, author_id, &app_state.db_client).await {
-                Ok(post) => HttpResponse::Ok().json(post),
-                Err(err) => err.into(),
-            }
-        }
-        _ => AppError::InternalError("error creating user").into(),
+    match services::post::create_post(form, &app_state.db_client).await {
+        Ok(post) => HttpResponse::Ok().json(post),
+        Err(err) => err.into(),
     }
 }
 

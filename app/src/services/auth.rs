@@ -1,7 +1,7 @@
 use sea_orm::DatabaseConnection;
 use serde::{Serialize, Deserialize};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+use services::time::{now, exp};
 
 use crate::error::AppError;
 use crate::services;
@@ -18,23 +18,6 @@ struct AuthClaims {
     sub: i64,
     // Token expiration
     exp: f64
-}
-
-// Gets the current time as the time since the unix epoch
-fn now() -> Result<Duration, AppError> {
-    match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(exp) => {
-            Ok(exp)
-        },
-        Err(_) => Err(AppError::InternalError(JWT_CREATE_ERR))
-    }
-}
-
-fn exp() -> Result<Duration, AppError> {
-    match now() {
-        Ok(now) => Ok(now + Duration::from_secs(7 * 24 * 60 * 60)),
-        Err(_) => Err(AppError::InternalError(JWT_CREATE_ERR))
-    }
 }
 
 

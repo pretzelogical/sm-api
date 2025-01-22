@@ -3,6 +3,7 @@ use crate::routes::auth::{check_auth, log_in, register};
 use crate::routes::post::{create_comment, create_post, get_comments, get_post};
 use crate::routes::user::get_user;
 use actix_web::{web, App, HttpServer};
+use actix_files::Files;
 use actix_cors::Cors;
 use sea_orm::DatabaseConnection;
 use sm_migration::{Migrator, MigratorTrait};
@@ -12,6 +13,8 @@ mod error;
 mod middleware;
 mod routes;
 mod services;
+
+pub const FILE_UPLOAD_ROOT: &str = "./media";
 
 #[derive(Debug, Clone)]
 pub struct AppState {
@@ -48,6 +51,7 @@ async fn start() -> std::io::Result<()> {
                     .route(web::post().to(create_comment))
                     .wrap(middleware::auth::JWTSession),
             )
+            .service(Files::new("/media/post", format!("{FILE_UPLOAD_ROOT}/post")))
             .wrap(cors)
     })
     .bind(("127.0.0.1", 8080))?

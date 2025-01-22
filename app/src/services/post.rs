@@ -5,6 +5,8 @@ use sea_orm::{
 use serde::Serialize;
 use sm_entity::post;
 
+use crate::routes::post::CreatePostForm;
+use crate::services::image::upload_post_img;
 use crate::error::{AppDbError, AppError};
 
 
@@ -101,21 +103,21 @@ pub async fn get_by_author_id(
 }
 
 pub async fn create_post(
-  title: &String,
-  content: &String,
-  author_id: &i64,
-  db_client: &DatabaseConnection,
+    form: CreatePostForm,
+    db_client: &DatabaseConnection,
 ) -> Result<post::Model, AppError> {
-  let new_post = post::ActiveModel {
-      title: ActiveValue::Set(title.to_owned()),
-      content: ActiveValue::Set(content.to_owned()),
-      author_id: ActiveValue::Set(author_id.to_owned()),
-      ..Default::default()
-  }
-  .insert(db_client)
-  .await;
-  match new_post {
-      Ok(post) => Ok(post),
-      Err(err) => Err(AppError::DbError(AppDbError::from(err))),
-  }
+    let img_path = upload_post_img(&form).await?;
+    let new_post = post::ActiveModel {
+        title: ActiveValue::Set(form.post.title.to_owned()),
+        content: ActiveValue::Set(form.post.content.to_owned()),
+        author_id: ActiveValue::Set(form.post.author_id.to_owned()),
+        img: ActiveValue::Set(img_path),
+        ..Default::default()
+    }
+        .insert(db_client)
+        .await;
+    match new_post {
+        Ok(post) => Ok(post),
+        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+    }
 }

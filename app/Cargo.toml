@@ -17,3 +17,7 @@ sea-orm = { workspace = true }
 jsonwebtoken = "9.3.0"
 futures-util = "0.3.31"
 actix-cors = "0.7.0"
+actix-multipart = "0.7.2"
+tokio = { version = "1.43.0", features = ["full"] }
+actix-files = "0.6.6"
+uuid = { version = "1.12.1", features = ["v4", "fast-rng"] }
