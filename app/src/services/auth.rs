@@ -64,7 +64,7 @@ pub fn is_token_expired(token: &String) -> Result<bool, AppError> {
     ) {
         Ok(claims) => {
             let user_exp = claims.claims.exp;
-            if now.as_secs_f64() < user_exp {
+            if now.as_secs_f64() > user_exp {
                 Ok(true)
             } else {
                 Ok(false)

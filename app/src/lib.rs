@@ -40,17 +40,19 @@ async fn start() -> std::io::Result<()> {
             .service(
                 web::resource("/user")
                     .route(web::get().to(get_user))
+                    .wrap(middleware::auth::JWTSession)
             )
             .service(
                 web::resource("/post")
                     .route(web::get().to(get_post))
                     .route(web::post().to(create_post))
-                    .wrap(middleware::auth::Auth)
+                    .wrap(middleware::auth::JWTSession)
             )
             .service(
                 web::resource("/post/{id}/comment")
                     .route(web::get().to(get_comments))
                     .route(web::post().to(create_comment))
+                    .wrap(middleware::auth::JWTSession)
             )
     })
         .bind(("127.0.0.1", 8080))?
