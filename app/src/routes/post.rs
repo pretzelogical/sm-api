@@ -1,6 +1,6 @@
 use crate::routes::prelude::*;
 use crate::services;
-use actix_multipart::form::{json::Json as MpJson, bytes::Bytes as MpBytes, MultipartForm};
+use actix_multipart::form::{bytes::Bytes as MpBytes, json::Json as MpJson, MultipartForm};
 
 #[derive(Deserialize)]
 pub struct GetPostArgs {
@@ -47,6 +47,7 @@ pub async fn get_post(
 pub struct CreatePostArgs {
     pub title: String,
     pub content: String,
+    // pub tags: Option<Vec<String>>,
     // pub author_name: Option<String>,
     pub author_id: i64,
 }
@@ -57,7 +58,6 @@ pub struct CreatePostForm {
     pub img: Option<MpBytes>,
     pub post: MpJson<CreatePostArgs>,
 }
-
 
 pub async fn create_post(
     app_state: web::Data<AppState>,
@@ -79,35 +79,35 @@ pub async fn get_comments(
     post_id: web::Path<i64>,
     args: web::Query<GetCommentsArgs>,
 ) -> impl Responder {
-    let post = sm_entity::post::Entity::
-        find_by_id(post_id.into_inner()).one(&app_state.db_client).await;
+    let post = sm_entity::post::Entity::find_by_id(post_id.into_inner())
+        .one(&app_state.db_client)
+        .await;
     if let Ok(Some(post)) = post {
         match services::post::get_comments(&post, &app_state.db_client, args.limit).await {
             Ok(Some(comments)) => HttpResponse::Ok().json(comments),
-            _ => AppError::NotFound("comment not found").into()
+            _ => AppError::NotFound("comment not found").into(),
         }
     } else {
         AppError::NotFound("comment not found").into()
     }
 }
 
-
 #[derive(Deserialize)]
 pub struct CreateCommentForm {
     pub author_id: i64,
     pub title: String,
-    pub content: String
+    pub content: String,
 }
 
 #[derive(Deserialize)]
 pub struct CreateCommentArgs {
-    pub comment: CreateCommentForm
+    pub comment: CreateCommentForm,
 }
 
 pub async fn create_comment(
     app_state: web::Data<AppState>,
     post_id: web::Path<i64>,
-    args: web::Json<CreateCommentArgs>
+    args: web::Json<CreateCommentArgs>,
 ) -> impl Responder {
     use ActiveValue::Set;
     let comment_form = &args.comment;
@@ -118,11 +118,11 @@ pub async fn create_comment(
         content: Set(comment_form.content.clone()),
         ..Default::default()
     }
-        .insert(&app_state.db_client)
-        .await;
+    .insert(&app_state.db_client)
+    .await;
 
     match comment {
         Ok(comment) => HttpResponse::Ok().json(comment),
-        Err(error) => AppError::DbError(AppDbError::from(error)).into()
+        Err(error) => AppError::DbError(AppDbError::from(error)).into(),
     }
 }
