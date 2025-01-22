@@ -108,12 +108,35 @@ pub async fn get_by_author_id(
     }
 }
 
-// creates a tag checking if one
-// pub async fn create_tag(
-//     name: &String,
-//     db_client: &DatabaseConnection,
-// ) -> Result<Option<Vec<sm_entity::tag::Model>>> {
-// }
+pub async fn create_tags(
+    form: CreatePostForm,
+    post: &post::Model,
+    db_client: &DatabaseConnection,
+) -> Result<Option<Vec<sm_entity::tag::Model>>, AppError> {
+    let tags = &form.post.tags;
+    if let Some(tags) = tags {
+        if tags.is_empty() {
+            return Ok(None);
+        }
+        let mut new_tags_vec: Vec<sm_entity::tag::Model> = Vec::with_capacity(tags.len());
+        for tag in tags {
+            let new_tag = sm_entity::tag::ActiveModel {
+                post_id: ActiveValue::Set(post.id),
+                name: ActiveValue::Set(tag.to_owned()),
+                ..Default::default()
+            }
+            .insert(db_client)
+            .await;
+            match new_tag {
+                Ok(tag) => new_tags_vec.push(tag),
+                Err(error) => return Err(AppError::DbError(AppDbError::from(error))),
+            }
+        }
+        Ok(Some(new_tags_vec))
+    } else {
+        Ok(None)
+    }
+}
 
 pub async fn create_post(
     form: CreatePostForm,

@@ -47,7 +47,7 @@ pub async fn get_post(
 pub struct CreatePostArgs {
     pub title: String,
     pub content: String,
-    // pub tags: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
     // pub author_name: Option<String>,
     pub author_id: i64,
 }
