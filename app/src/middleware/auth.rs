@@ -63,8 +63,6 @@ where
             }
         };
 
-        println!("is_exp: {}", is_exp);
-
         if is_exp {
             let (request, _pl) = request.into_parts();
 

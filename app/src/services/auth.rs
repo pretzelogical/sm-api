@@ -113,31 +113,3 @@ pub async fn create_user(user_name: &String, user_password: &String, db_client: 
     let token = create_auth_token(&user)?;
     Ok((user, token))
 }
-
-// pub async fn auth_middleware(
-//     req: ServiceRequest,
-//     next: Next<impl MessageBody>
-// ) -> Result<ServiceResponse<impl MessageBody>, Error> {
-//     let http_req = req.into_parts().0;
-//     let token = match http_req.headers().get("Authorization") {
-//         Some(header) => {
-//             header.to_str().unwrap().to_string().replace("Bearer ", "")
-//         },
-//         None => return Ok(ServiceResponse::new(http_req, HttpResponse::Unauthorized().finish()))
-//     };
-//     match is_token_expired(&token) {
-//         Ok(is_exp) => {
-//             if is_exp {
-//                 return Ok(ServiceResponse::new(http_req, AppError::Unauthorized("session expired").into()))
-//             } else {
-//                 match next.call(req).await {
-//                     Ok(res) => {
-//                         Ok(res)
-//                     },
-//                     Err(err) => Err(err)
-//                 }
-//             }
-//         },
-//         Err(err) => Ok(ServiceResponse::new(http_req, err.into()))
-//     }
-// }
