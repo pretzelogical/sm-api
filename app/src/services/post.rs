@@ -14,6 +14,7 @@ use crate::error::{AppDbError, AppError};
 pub struct PostResponseItem {
     pub post: sm_entity::post::Model,
     pub comment: Option<Vec<sm_entity::comment::Model>>,
+    pub tag: Option<Vec<sm_entity::tag::Model>>
 }
 
 
@@ -44,6 +45,24 @@ pub async fn get_comments(
   }
 }
 
+pub async fn get_tags(
+    post: &sm_entity::post::Model,
+    db_client: &DatabaseConnection
+) -> Result<Option<Vec<sm_entity::tag::Model>>, AppError> {
+    match post.find_related(sm_entity::tag::Entity)
+        .all(db_client)
+        .await {
+            Ok(tags) => {
+                if tags.len() > 0 {
+                    Ok(Some(tags))
+                } else {
+                    Ok(None)
+                }
+            },
+            Err(err) => Err(AppError::DbError(AppDbError::from(err)))
+        }
+}
+
 pub async fn get_by_id(
   post_id: i64,
   db_client: &DatabaseConnection,
@@ -52,13 +71,8 @@ pub async fn get_by_id(
   match db_res {
       Ok(post) => match post {
           Some(post) => Ok(PostResponseItem {
-              comment: match get_comments(&post, db_client, None).await {
-                  Ok(comment) => comment,
-                  Err(error) => {
-                      println!("uncaught db error {:#?}", error);
-                      None
-                  }
-              },
+              comment: get_comments(&post, db_client, None).await?,
+              tag: get_tags(&post, db_client).await?,
               post: post,
           }),
           None => Err(AppError::NotFound("post not found")),
@@ -82,19 +96,13 @@ pub async fn get_by_author_id(
       Ok(posts) => {
           let mut item_vec = Vec::with_capacity(posts.len());
           for post in posts {
-              let comment = get_comments(&post, db_client, None).await;
-              if let Ok(comment) = comment {
-                  item_vec.push(PostResponseItem {
-                      post: post,
-                      comment: comment,
-                  });
-              } else if let Err(error) = comment {
-                  println!("uncaught db error {:#?}", error);
-                  item_vec.push(PostResponseItem {
-                      post: post,
-                      comment: None,
-                  });
-              }
+              item_vec.push(
+                PostResponseItem {
+                    comment: get_comments(&post, db_client, None).await?,
+                    tag: get_tags(&post, db_client).await?,
+                    post: post
+                }
+              );
           }
           Ok(item_vec)
       }

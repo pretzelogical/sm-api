@@ -42,7 +42,7 @@ impl Related<super::comment::Entity> for Entity {
 
 impl Related<super::tag::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Comment.def()
+        Relation::Tag.def()
     }
 }
 
