@@ -9,6 +9,8 @@ use crate::error::{AppDbError, AppError};
 use crate::routes::post::CreatePostForm;
 use crate::services::image::upload_post_img;
 
+use super::time::now;
+
 #[derive(Serialize)]
 pub struct PostResponseItem {
     pub post: sm_entity::post::Model,
@@ -198,11 +200,13 @@ pub async fn create_post(
     db_client: &DatabaseConnection,
 ) -> Result<post::Model, AppError> {
     let img_path = upload_post_img(&form).await?;
+    let now = now()?;
     let new_post = post::ActiveModel {
         title: ActiveValue::Set(form.post.title.to_owned()),
         content: ActiveValue::Set(form.post.content.to_owned()),
         author_id: ActiveValue::Set(form.post.author_id.to_owned()),
         img: ActiveValue::Set(img_path),
+        date: ActiveValue::Set(now.as_secs_f64()),
         ..Default::default()
     }
     .insert(db_client)
