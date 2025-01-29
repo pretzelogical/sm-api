@@ -73,7 +73,7 @@ pub async fn get_by_id(
             Some(post) => Ok(PostResponseItem {
                 comment: get_comments(&post, db_client, None).await?,
                 tag: get_tags(&post, db_client).await?,
-                post: post,
+                post,
             }),
             None => Err(AppError::NotFound("post not found")),
         },
@@ -81,9 +81,31 @@ pub async fn get_by_id(
     }
 }
 
-// pub async fn get_latest(db_client: &DatabaseConnection) -> Result<Vec<PostResponseItem>, AppError> {
-//     match post::Entity::find().order_by_asc(post::Column::)
-// }
+pub async fn get_latest(
+    db_client: &DatabaseConnection,
+    page: i64,
+) -> Result<Vec<PostResponseItem>, AppError> {
+    let page = if page > 0 { page } else { 1 };
+    match post::Entity::find()
+        .order_by_desc(post::Column::Date)
+        .limit(Some(10 * page as u64))
+        .all(db_client)
+        .await
+    {
+        Ok(posts) => {
+            let mut item_vec = Vec::with_capacity(posts.len());
+            for post in posts {
+                item_vec.push(PostResponseItem {
+                    comment: get_comments(&post, db_client, None).await?,
+                    tag: get_tags(&post, db_client).await?,
+                    post,
+                });
+            }
+            Ok(item_vec)
+        }
+        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+    }
+}
 
 pub async fn get_by_author_id(
     author_id: i64,

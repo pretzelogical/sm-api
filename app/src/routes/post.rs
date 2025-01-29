@@ -1,5 +1,5 @@
-use crate::routes::prelude::*;
 use crate::services;
+use crate::{routes::prelude::*, services::post::get_latest};
 use actix_multipart::form::{bytes::Bytes as MpBytes, json::Json as MpJson, MultipartForm};
 
 #[derive(Deserialize)]
@@ -19,9 +19,10 @@ pub async fn get_post(
         None => 1,
     };
     match (args.id, args.author_id, limit) {
-        (None, None, _) => {
-            AppError::BadRequest("Must provide an 'id' or an 'author_id' field").into()
-        }
+        (None, None, _) => match get_latest(db_client, 1).await {
+            Ok(post) => HttpResponse::Ok().json(post),
+            Err(err) => err.into(),
+        },
         (Some(_), Some(_), _) => AppError::BadRequest(
             "Must provide either an 'id' or an 'author_id' field, but not both",
         )
