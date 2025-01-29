@@ -81,6 +81,10 @@ pub async fn get_by_id(
     }
 }
 
+// pub async fn get_latest(db_client: &DatabaseConnection) -> Result<Vec<PostResponseItem>, AppError> {
+//     match post::Entity::find().order_by_asc(post::Column::)
+// }
+
 pub async fn get_by_author_id(
     author_id: i64,
     limit: u64,

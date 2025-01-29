@@ -8,6 +8,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i64,
     pub author_id: i64,
+    pub date: f64,
     pub title: String,
     pub content: String,
     pub img: Option<String>,
