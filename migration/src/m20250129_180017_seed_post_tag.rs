@@ -9,9 +9,10 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        sm_entity::tag::ActiveModel {
+        sm_entity::post_tag::ActiveModel {
             id: Set(1),
-            name: Set("Test".to_owned()),
+            post_id: Set(1),
+            tag_id: Set(1),
         }
         .insert(db)
         .await
@@ -23,11 +24,11 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        let tag = sm_entity::tag::Entity::find_by_id(1).one(db).await?;
-        if let Some(tag) = tag {
-            tag.delete(db).await?;
+        let post_tag = sm_entity::post_tag::Entity::find_by_id(1).one(db).await?;
+        if let Some(post_tag) = post_tag {
+            post_tag.delete(db).await?;
         } else {
-            panic!("Cannot find seeded tag");
+            panic!("Cannot find seeded post_tag");
         }
         Ok(())
     }

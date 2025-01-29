@@ -1,12 +1,13 @@
 use std::future::{ready, Ready};
 
+use crate::services::auth::is_token_expired;
 use actix_web::{
     body::EitherBody,
     dev::{self, Service, ServiceRequest, ServiceResponse, Transform},
-    http::{self, header::HeaderValue}, Error, HttpResponse,
+    http::{self, header::HeaderValue},
+    Error, HttpResponse,
 };
 use futures_util::future::LocalBoxFuture;
-use crate::services::auth::is_token_expired;
 
 pub struct JWTSession;
 
@@ -55,14 +56,11 @@ where
             .to_string()
             .replace("Bearer ", "");
         let is_exp = match is_token_expired(&token) {
-            Ok(is_exp) => {
-                is_exp
-            },
-            Err(_err) => {
-                true
-            }
+            Ok(is_exp) => is_exp,
+            Err(_err) => true,
         };
 
+        // if the token is expired redirect to login
         if is_exp {
             let (request, _pl) = request.into_parts();
 
@@ -82,3 +80,4 @@ where
         })
     }
 }
+

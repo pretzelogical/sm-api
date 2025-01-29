@@ -8,6 +8,8 @@ mod m20250106_071837_create_comment_table;
 mod m20250106_072207_seed_comment;
 mod m20250122_090442_create_tag_table;
 mod m20250122_090545_seed_tag;
+mod m20250129_175434_create_post_tag;
+mod m20250129_180017_seed_post_tag;
 
 pub struct Migrator;
 
@@ -23,6 +25,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20250106_072207_seed_comment::Migration),
             Box::new(m20250122_090442_create_tag_table::Migration),
             Box::new(m20250122_090545_seed_tag::Migration),
+            Box::new(m20250129_175434_create_post_tag::Migration),
+            Box::new(m20250129_180017_seed_post_tag::Migration),
         ]
     }
 }
