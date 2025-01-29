@@ -21,7 +21,6 @@ impl MigrationTrait for Migration {
                     .table(Tag::Table)
                     .if_not_exists()
                     .col(pk_auto(Tag::Id))
-                    .col(integer(Tag::PostId))
                     .col(string(Tag::Name).unique_key())
                     .take(),
             )

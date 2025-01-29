@@ -1,6 +1,5 @@
-use serde::{Serialize, Deserialize};
 use sea_orm::entity::prelude::*;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, DeriveEntityModel)]
 #[sea_orm(table_name = "post")]
@@ -22,9 +21,9 @@ pub enum Relation {
         to = "super::user::Column::Id"
     )]
     User,
-    #[sea_orm( has_many = "super::comment::Entity" )]
+    #[sea_orm(has_many = "super::comment::Entity")]
     Comment,
-    #[sea_orm( has_many = "super::tag::Entity" )]
+    #[sea_orm(has_many = "super::tag::Entity")]
     Tag,
 }
 
@@ -42,7 +41,11 @@ impl Related<super::comment::Entity> for Entity {
 
 impl Related<super::tag::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Tag.def()
+        super::post_tag::Relation::Tag.def()
+    }
+
+    fn via() -> Option<RelationDef> {
+        Some(super::post_tag::Relation::Post.def().rev())
     }
 }
 

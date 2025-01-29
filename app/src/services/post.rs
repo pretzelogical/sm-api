@@ -121,7 +121,6 @@ pub async fn create_tags(
         let mut new_tags_vec: Vec<sm_entity::tag::Model> = Vec::with_capacity(tags.len());
         for tag in tags {
             let new_tag = sm_entity::tag::ActiveModel {
-                post_id: ActiveValue::Set(post.id),
                 name: ActiveValue::Set(tag.to_owned()),
                 ..Default::default()
             }
@@ -157,4 +156,3 @@ pub async fn create_post(
         Err(err) => Err(AppError::DbError(AppDbError::from(err))),
     }
 }
-
