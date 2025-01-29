@@ -1,6 +1,6 @@
 use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait,
-    QueryFilter, QueryOrder, QuerySelect,
+    QueryFilter, QueryOrder, QuerySelect, SqlErr,
 };
 use serde::Serialize;
 use sm_entity::post;
@@ -128,6 +128,36 @@ pub async fn create_tags(
             .await;
             match new_tag {
                 Ok(tag) => new_tags_vec.push(tag),
+                Err(error) => match &error.sql_err() {
+                    // If tag already exists then find it and add it
+                    Some(SqlErr::UniqueConstraintViolation(_)) => {
+                        match sm_entity::tag::Entity::find()
+                            .filter(sm_entity::tag::Column::Name.contains(tag))
+                            .order_by_asc(sm_entity::tag::Column::Name)
+                            .one(db_client)
+                            .await
+                        {
+                            Ok(Some(tag)) => new_tags_vec.push(tag),
+                            Ok(None) => return Err(AppError::InternalError("Cannot find tag")),
+                            Err(err) => return Err(AppError::DbError(AppDbError::from(err))),
+                        }
+                    }
+                    Some(_) => return Err(AppError::DbError(AppDbError::from(error))),
+                    None => (),
+                },
+            }
+        }
+        // Junction table
+        for tag in &new_tags_vec {
+            let new_post_tag = sm_entity::post_tag::ActiveModel {
+                post_id: ActiveValue::Set(post.id),
+                tag_id: ActiveValue::Set(tag.id),
+                ..Default::default()
+            }
+            .insert(db_client)
+            .await;
+            match new_post_tag {
+                Ok(_) => (),
                 Err(error) => return Err(AppError::DbError(AppDbError::from(error))),
             }
         }
@@ -151,8 +181,12 @@ pub async fn create_post(
     }
     .insert(db_client)
     .await;
+
     match new_post {
-        Ok(post) => Ok(post),
+        Ok(post) => {
+            let _ = create_tags(form, &post, db_client).await?;
+            Ok(post)
+        }
         Err(err) => Err(AppError::DbError(AppDbError::from(err))),
     }
 }

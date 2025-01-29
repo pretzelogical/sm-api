@@ -7,7 +7,6 @@ pub struct Migration;
 enum Tag {
     Table,
     Id,
-    PostId,
     Name,
 }
 
