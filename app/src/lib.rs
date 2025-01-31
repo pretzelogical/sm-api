@@ -2,9 +2,10 @@ use crate::conf::db_conf;
 use crate::routes::auth::{check_auth, log_in, register};
 use crate::routes::post::{create_comment, create_post, get_comments, get_post};
 use crate::routes::user::get_user;
-use actix_web::{web, App, HttpServer};
-use actix_files::Files;
 use actix_cors::Cors;
+use actix_files::Files;
+use actix_web::{middleware::Logger, web, App, HttpServer};
+use env_logger::Env;
 use sea_orm::DatabaseConnection;
 use sm_migration::{Migrator, MigratorTrait};
 
@@ -26,6 +27,8 @@ async fn start() -> std::io::Result<()> {
     let db_client = db_conf().await.unwrap();
     // Apply migrations
     Migrator::up(&db_client, None).await.unwrap();
+    // Logger
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
     let app_state = AppState { db_client };
     let server = HttpServer::new(move || {
         let cors = Cors::permissive();
@@ -51,8 +54,12 @@ async fn start() -> std::io::Result<()> {
                     .route(web::post().to(create_comment))
                     .wrap(middleware::auth::JWTSession),
             )
-            .service(Files::new("/media/post", format!("{FILE_UPLOAD_ROOT}/post")))
+            .service(Files::new(
+                "/media/post",
+                format!("{FILE_UPLOAD_ROOT}/post"),
+            ))
             .wrap(cors)
+            .wrap(Logger::default())
     })
     .bind(("127.0.0.1", 8080))?
     .run();
@@ -67,4 +74,3 @@ pub fn main() {
         println!("Error: {err}");
     }
 }
-
