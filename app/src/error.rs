@@ -1,5 +1,5 @@
-use actix_web::HttpResponse;
-use derive_more::derive::{Display, Error};
+use actix_web::{error, http::StatusCode, HttpResponse};
+use derive_more::derive::Display;
 use sea_orm::DbErr;
 use serde::{Deserialize, Serialize};
 
@@ -35,35 +35,7 @@ impl From<&DbErr> for JsonError {
     }
 }
 
-// #[derive(Debug, Display)]
-// #[display("error: {:#?}", message)]
-// pub struct AppDbError {
-//     pub error: Option<DbErr>,
-//     pub message: Option<&'static str>,
-// }
-//
-// impl AppDbError {
-//     pub fn new(error: Option<DbErr>, message: Option<&'static str>) -> AppDbError {
-//         AppDbError {
-//             error: error,
-//             message: message,
-//         }
-//     }
-// }
-//
-// impl From<DbErr> for AppDbError {
-//     fn from(error: DbErr) -> Self {
-//         AppDbError::new(Some(error), None)
-//     }
-// }
-//
-// impl From<&'static str> for AppDbError {
-//     fn from(message: &'static str) -> Self {
-//         AppDbError::new(None, Some(message))
-//     }
-// }
-
-#[derive(Debug, Error, Display)]
+#[derive(Debug, Display)]
 pub enum AppError {
     DbError(DbErr),
     BadRequest(&'static str),
@@ -72,22 +44,34 @@ pub enum AppError {
     Unauthorized(&'static str),
 }
 
-impl Into<HttpResponse> for AppError {
-    fn into(self) -> HttpResponse {
+impl error::ResponseError for AppError {
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
         match self {
             AppError::DbError(error) => {
-                HttpResponse::InternalServerError().json(JsonError::from(error.to_string()))
+                HttpResponse::build(self.status_code()).json(JsonError::from(error.to_string()))
             }
             AppError::BadRequest(message) => {
-                HttpResponse::BadRequest().json(JsonError::from(message))
+                HttpResponse::build(self.status_code()).json(JsonError::from(message.to_string()))
             }
-            AppError::NotFound(message) => HttpResponse::NotFound().json(JsonError::from(message)),
+            AppError::NotFound(message) => {
+                HttpResponse::build(self.status_code()).json(JsonError::from(message.to_string()))
+            }
             AppError::InternalError(message) => {
-                HttpResponse::InternalServerError().json(JsonError::from(message))
+                HttpResponse::build(self.status_code()).json(JsonError::from(message.to_string()))
             }
             AppError::Unauthorized(message) => {
-                HttpResponse::Unauthorized().json(JsonError::from(message))
+                HttpResponse::build(self.status_code()).json(JsonError::from(message.to_string()))
             }
+        }
+    }
+
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            AppError::DbError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            AppError::NotFound(_) => StatusCode::NOT_FOUND,
+            AppError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
         }
     }
 }

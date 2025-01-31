@@ -29,16 +29,17 @@ impl AuthResponse {
 }
 
 // Check if user is session authenticated
-pub async fn check_auth(app_state: web::Data<AppState>, args: HttpRequest) -> impl Responder {
+pub async fn check_auth(
+    app_state: web::Data<AppState>,
+    args: HttpRequest,
+) -> Result<HttpResponse, AppError> {
     let db_client = &app_state.db_client;
     let token = match args.headers().get("Authorization") {
         Some(token) => token.to_str().unwrap().to_string().replace("Bearer ", ""),
-        None => return AppError::Unauthorized("Token missing").into(),
+        None => return Err(AppError::Unauthorized("Token missing")),
     };
-    match services::auth::check_auth_token(&token, db_client).await {
-        Ok(user) => HttpResponse::Ok().json(AuthResponse::new(token, user)),
-        Err(err) => err.into(),
-    }
+    let user = services::auth::check_auth_token(&token, db_client).await?;
+    Ok(HttpResponse::Ok().json(AuthResponse::new(token, user)))
 }
 
 #[derive(Deserialize)]
@@ -48,20 +49,23 @@ pub struct AuthArgs {
 }
 
 // Creates a new session from a user
-pub async fn log_in(app_state: web::Data<AppState>, args: web::Json<AuthArgs>) -> impl Responder {
+pub async fn log_in(
+    app_state: web::Data<AppState>,
+    args: web::Json<AuthArgs>,
+) -> Result<HttpResponse, AppError> {
     let db_client = &app_state.db_client;
-    match services::auth::login_user(&args.username, &args.password, db_client).await {
-        Ok((user, token)) => HttpResponse::Ok().json(AuthResponse::new(token, user)),
-        Err(err) => err.into(),
-    }
+    let (user, token) =
+        services::auth::login_user(&args.username, &args.password, db_client).await?;
+    Ok(HttpResponse::Ok().json(AuthResponse::new(token, user)))
 }
 
 // Creates a new user and returns a jwt
-pub async fn register(app_state: web::Data<AppState>, args: web::Json<AuthArgs>) -> impl Responder {
+pub async fn register(
+    app_state: web::Data<AppState>,
+    args: web::Json<AuthArgs>,
+) -> Result<HttpResponse, AppError> {
     let db_client = &app_state.db_client;
-    match services::auth::create_user(&args.username, &args.password, db_client).await {
-        Ok((user, token)) => HttpResponse::Ok().json(AuthResponse::new(token, user)),
-        Err(err) => err.into(),
-    }
+    let (user, token) =
+        services::auth::create_user(&args.username, &args.password, db_client).await?;
+    Ok(HttpResponse::Ok().json(AuthResponse::new(token, user)))
 }
-

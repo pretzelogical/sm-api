@@ -12,30 +12,29 @@ pub struct GetPostArgs {
 pub async fn get_post(
     app_state: web::Data<AppState>,
     args: web::Query<GetPostArgs>,
-) -> impl Responder {
+) -> Result<HttpResponse, AppError> {
     let db_client = &app_state.db_client;
     let limit = args.limit.unwrap_or(1);
     match (args.id, args.author_id, limit) {
-        (None, None, _) => match get_latest(db_client, 1).await {
-            Ok(post) => HttpResponse::Ok().json(post),
-            Err(err) => err.into(),
-        },
-        (Some(_), Some(_), _) => AppError::BadRequest(
-            "Must provide either an 'id' or an 'author_id' field, but not both",
-        )
-        .into(),
-        (Some(post_id), None, _) => match services::post::get_by_id(post_id, db_client).await {
-            Ok(post) => HttpResponse::Ok().json(post),
-            Err(err) => err.into(),
-        },
+        (None, None, _) => {
+            let post = get_latest(db_client, 1).await?;
+            Ok(HttpResponse::Ok().json(post))
+        }
+        (Some(_), Some(_), _) => Err(AppError::BadRequest(
+            "Can provide either an 'id' or an 'author_id' field, but not both",
+        )),
+        (Some(post_id), None, _) => {
+            let post = services::post::get_by_id(post_id, db_client).await?;
+            Ok(HttpResponse::Ok().json(post))
+        }
         (None, Some(author_id), limit) => {
             if limit > 0 {
-                match services::post::get_by_author_id(author_id, limit, db_client).await {
-                    Ok(post) => HttpResponse::Ok().json(post),
-                    Err(err) => err.into(),
-                }
+                let post = services::post::get_by_author_id(author_id, limit, db_client).await?;
+                Ok(HttpResponse::Ok().json(post))
             } else {
-                AppError::BadRequest("config.limit must be a number above 1").into()
+                Err(AppError::BadRequest(
+                    "config.limit must be a number above 1",
+                ))
             }
         }
     }
@@ -60,11 +59,9 @@ pub struct CreatePostForm {
 pub async fn create_post(
     app_state: web::Data<AppState>,
     MultipartForm(form): MultipartForm<CreatePostForm>,
-) -> impl Responder {
-    match services::post::create_post(form, &app_state.db_client).await {
-        Ok(post) => HttpResponse::Ok().json(post),
-        Err(err) => err.into(),
-    }
+) -> Result<HttpResponse, AppError> {
+    let post = services::post::create_post(form, &app_state.db_client).await?;
+    Ok(HttpResponse::Ok().json(post))
 }
 
 // #[derive(Deserialize)]
