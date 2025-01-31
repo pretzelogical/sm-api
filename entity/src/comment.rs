@@ -1,14 +1,15 @@
-use serde::{Serialize, Deserialize};
 use sea_orm::entity::prelude::*;
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, DeriveEntityModel)]
 #[sea_orm(table_name = "comment")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     pub id: i64,
+    #[serde(skip_deserializing, skip_serializing)]
     pub post_id: i64,
+    #[serde(skip_deserializing, skip_serializing)]
     pub author_id: i64,
     pub title: String,
     pub content: String,
@@ -23,11 +24,11 @@ pub enum Relation {
     )]
     User,
     #[sea_orm(
-      belongs_to = "super::post::Entity",
-      from = "Column::PostId",
-      to = "super::post::Column::Id"
+        belongs_to = "super::post::Entity",
+        from = "Column::PostId",
+        to = "super::post::Column::Id"
     )]
-    Post
+    Post,
 }
 
 impl Related<super::user::Entity> for Entity {
