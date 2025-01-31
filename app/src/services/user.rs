@@ -1,7 +1,9 @@
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, ActiveModelTrait, ActiveValue};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+};
 use sm_entity::user;
 
-use crate::error::{AppDbError, AppError};
+use crate::error::AppError;
 
 pub async fn get_by_id(
     user_id: i64,
@@ -13,7 +15,7 @@ pub async fn get_by_id(
             Some(user) => Ok(user),
             None => Err(AppError::NotFound("User with id not found")),
         },
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -28,7 +30,7 @@ pub async fn get_by_name(
     match db_res {
         Ok(Some(user)) => Ok(user),
         Ok(None) => Err(AppError::NotFound("User with name not found")),
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -46,7 +48,7 @@ pub async fn get_by_login(
     match db_res {
         Ok(Some(user)) => Ok(user),
         Ok(None) => Err(AppError::NotFound("User with name not found")),
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -61,10 +63,10 @@ pub async fn new_user(
         pass: ActiveValue::Set(user_password.to_owned()),
         ..Default::default()
     }
-        .insert(db_client)
-        .await;
+    .insert(db_client)
+    .await;
     match new_user {
         Ok(new_user) => Ok(new_user),
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }

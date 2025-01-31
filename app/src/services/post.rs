@@ -5,7 +5,7 @@ use sea_orm::{
 use serde::Serialize;
 use sm_entity::post;
 
-use crate::error::{AppDbError, AppError};
+use crate::error::AppError;
 use crate::routes::post::CreatePostForm;
 use crate::services::image::upload_post_img;
 
@@ -41,7 +41,7 @@ pub async fn get_comments(
                 Ok(None)
             }
         }
-        Err(error) => Err(AppError::DbError(AppDbError::from(error))),
+        Err(error) => Err(AppError::DbError(error)),
     }
 }
 
@@ -61,7 +61,7 @@ pub async fn get_tags(
                 Ok(None)
             }
         }
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -79,7 +79,7 @@ pub async fn get_by_id(
             }),
             None => Err(AppError::NotFound("post not found")),
         },
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -105,7 +105,7 @@ pub async fn get_latest(
             }
             Ok(item_vec)
         }
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -132,7 +132,7 @@ pub async fn get_by_author_id(
             }
             Ok(item_vec)
         }
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
 
@@ -167,10 +167,10 @@ pub async fn create_tags(
                         {
                             Ok(Some(tag)) => new_tags_vec.push(tag),
                             Ok(None) => return Err(AppError::InternalError("Cannot find tag")),
-                            Err(err) => return Err(AppError::DbError(AppDbError::from(err))),
+                            Err(err) => return Err(AppError::DbError(err)),
                         }
                     }
-                    Some(_) => return Err(AppError::DbError(AppDbError::from(error))),
+                    Some(_) => return Err(AppError::DbError(error)),
                     None => (),
                 },
             }
@@ -186,7 +186,7 @@ pub async fn create_tags(
             .await;
             match new_post_tag {
                 Ok(_) => (),
-                Err(error) => return Err(AppError::DbError(AppDbError::from(error))),
+                Err(error) => return Err(AppError::DbError(error)),
             }
         }
         Ok(Some(new_tags_vec))
@@ -217,6 +217,6 @@ pub async fn create_post(
             let _ = create_tags(form, &post, db_client).await?;
             Ok(post)
         }
-        Err(err) => Err(AppError::DbError(AppDbError::from(err))),
+        Err(err) => Err(AppError::DbError(err)),
     }
 }
