@@ -1,49 +1,47 @@
-use sea_orm::DatabaseConnection;
-use serde::{Serialize, Deserialize};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use services::time::{now, exp};
+use sea_orm::DatabaseConnection;
+use serde::{Deserialize, Serialize};
+use services::time::{exp, now};
 
 use crate::error::AppError;
 use crate::services;
 
-const DEV_SECRET: &'static str = "SECRET";
+const DEV_SECRET: &str = "SECRET";
 
-const JWT_CREATE_ERR: &'static str = "Cannot create jwt";
-const JWT_CHECK_ERR: &'static str = "Cannot check jwt";
-
+const JWT_CREATE_ERR: &str = "Cannot create jwt";
+const JWT_CHECK_ERR: &str = "Cannot check jwt";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AuthClaims {
     // user id
     sub: i64,
     // Token expiration
-    exp: f64
+    exp: f64,
 }
 
-
 // Creates a jwt that logs the user in for 7 days
-pub fn create_auth_token(user: &sm_entity::user::Model) -> Result<String, AppError>  {
+pub fn create_auth_token(user: &sm_entity::user::Model) -> Result<String, AppError> {
     let exp = exp()?;
     match encode(
         &Header::default(),
         &AuthClaims {
             sub: user.id,
-            exp: exp.as_secs_f64()
+            exp: exp.as_secs_f64(),
         },
-        &EncodingKey::from_secret(DEV_SECRET.as_ref())
+        &EncodingKey::from_secret(DEV_SECRET.as_ref()),
     ) {
         Ok(jwt) => Ok(jwt),
-        Err(_) => Err(AppError::InternalError(JWT_CREATE_ERR))
+        Err(_) => Err(AppError::InternalError(JWT_CREATE_ERR)),
     }
 }
 
-pub fn is_token_expired(token: &String) -> Result<bool, AppError> {
+pub fn is_token_expired(token: &str) -> Result<bool, AppError> {
     let now = now()?;
 
     match decode::<AuthClaims>(
-        &token,
+        token,
         &DecodingKey::from_secret(DEV_SECRET.as_ref()),
-        &Validation::new(Algorithm::HS256)
+        &Validation::new(Algorithm::HS256),
     ) {
         Ok(claims) => {
             let user_exp = claims.claims.exp;
@@ -52,20 +50,22 @@ pub fn is_token_expired(token: &String) -> Result<bool, AppError> {
             } else {
                 Ok(false)
             }
-        },
-        Err(_) => Err(AppError::InternalError("Unable to decode token"))
+        }
+        Err(_) => Err(AppError::InternalError("Unable to decode token")),
     }
 }
 
-
 // Checks if the token is valid
-pub async fn check_auth_token(token: &String, db_client: &DatabaseConnection) -> Result<sm_entity::user::Model, AppError> {
+pub async fn check_auth_token(
+    token: &str,
+    db_client: &DatabaseConnection,
+) -> Result<sm_entity::user::Model, AppError> {
     let now = now()?;
 
     match decode::<AuthClaims>(
-        &token,
+        token,
         &DecodingKey::from_secret(DEV_SECRET.as_ref()),
-        &Validation::new(Algorithm::HS256)
+        &Validation::new(Algorithm::HS256),
     ) {
         Ok(claims) => {
             let user_exp = claims.claims.exp;
@@ -75,24 +75,32 @@ pub async fn check_auth_token(token: &String, db_client: &DatabaseConnection) ->
             }
             match services::user::get_by_id(user_id, db_client).await {
                 Ok(user) => Ok(user),
-                Err(err) => Err(err)
+                Err(err) => Err(err),
             }
-        },
-        Err(_) => Err(AppError::InternalError(JWT_CHECK_ERR))
+        }
+        Err(_) => Err(AppError::InternalError(JWT_CHECK_ERR)),
     }
 }
 
 // Logs in a user with username and password and returns the user and a jwt
-pub async fn login_user(user_name: &String, user_password: &String, db_client: &DatabaseConnection) -> Result<(sm_entity::user::Model, String), AppError> {
+pub async fn login_user(
+    user_name: &String,
+    user_password: &String,
+    db_client: &DatabaseConnection,
+) -> Result<(sm_entity::user::Model, String), AppError> {
     let user = services::user::get_by_login(user_name, user_password, db_client).await?;
     let token = create_auth_token(&user)?;
     Ok((user, token))
 }
 
-
 // Creates a new user with username and password and returns the user and a jwt
-pub async fn create_user(user_name: &String, user_password: &String, db_client: &DatabaseConnection) -> Result<(sm_entity::user::Model, String), AppError> {
+pub async fn create_user(
+    user_name: &String,
+    user_password: &String,
+    db_client: &DatabaseConnection,
+) -> Result<(sm_entity::user::Model, String), AppError> {
     let user = services::user::new_user(user_name, user_password, db_client).await?;
     let token = create_auth_token(&user)?;
     Ok((user, token))
 }
+

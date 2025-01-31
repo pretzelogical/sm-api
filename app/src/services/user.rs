@@ -19,20 +19,20 @@ pub async fn get_by_id(
     }
 }
 
-pub async fn get_by_name(
-    user_name: &String,
-    db_client: &DatabaseConnection,
-) -> Result<user::Model, AppError> {
-    let db_res = user::Entity::find()
-        .filter(user::Column::Name.contains(user_name))
-        .one(db_client)
-        .await;
-    match db_res {
-        Ok(Some(user)) => Ok(user),
-        Ok(None) => Err(AppError::NotFound("User with name not found")),
-        Err(err) => Err(AppError::DbError(err)),
-    }
-}
+// pub async fn get_by_name(
+//     user_name: &String,
+//     db_client: &DatabaseConnection,
+// ) -> Result<user::Model, AppError> {
+//     let db_res = user::Entity::find()
+//         .filter(user::Column::Name.contains(user_name))
+//         .one(db_client)
+//         .await;
+//     match db_res {
+//         Ok(Some(user)) => Ok(user),
+//         Ok(None) => Err(AppError::NotFound("User with name not found")),
+//         Err(err) => Err(AppError::DbError(err)),
+//     }
+// }
 
 // Finds the user with the matching name AND password
 pub async fn get_by_login(

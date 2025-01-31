@@ -35,7 +35,7 @@ pub async fn get_comments(
     };
     match comments {
         Ok(comments) => {
-            if comments.len() > 0 {
+            if !comments.is_empty() {
                 Ok(Some(comments))
             } else {
                 Ok(None)
@@ -55,7 +55,7 @@ pub async fn get_tags(
         .await
     {
         Ok(tags) => {
-            if tags.len() > 0 {
+            if !tags.is_empty() {
                 Ok(Some(tags))
             } else {
                 Ok(None)
@@ -127,7 +127,7 @@ pub async fn get_by_author_id(
                 item_vec.push(PostResponseItem {
                     comment: get_comments(&post, db_client, None).await?,
                     tag: get_tags(&post, db_client).await?,
-                    post: post,
+                    post,
                 });
             }
             Ok(item_vec)
