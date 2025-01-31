@@ -3,7 +3,7 @@ use sea_orm::{
     QueryFilter, QueryOrder, QuerySelect, SqlErr,
 };
 use serde::Serialize;
-use sm_entity::post;
+use sm_entity::{comment, post};
 
 use crate::error::AppError;
 use crate::routes::post::CreatePostForm;
@@ -87,25 +87,31 @@ pub async fn get_latest(
     db_client: &DatabaseConnection,
     page: i64,
 ) -> Result<Vec<PostResponseItem>, AppError> {
-    let page = if page > 0 { page } else { 1 };
+    let _page = if page > 0 { page } else { 1 };
     match post::Entity::find()
-        .order_by_desc(post::Column::Date)
-        .limit(Some(10 * page as u64))
+        .order_by_asc(post::Column::Date)
+        .limit(10)
+        .find_with_related(comment::Entity)
         .all(db_client)
         .await
     {
-        Ok(posts) => {
-            let mut item_vec = Vec::with_capacity(posts.len());
-            for post in posts {
-                item_vec.push(PostResponseItem {
-                    comment: get_comments(&post, db_client, None).await?,
+        Ok(posts_comments) => {
+            let mut posts_vec = Vec::new();
+            for (post, comment) in posts_comments {
+                let comment = if comment.is_empty() {
+                    None
+                } else {
+                    Some(comment)
+                };
+                posts_vec.push(PostResponseItem {
                     tag: get_tags(&post, db_client).await?,
                     post,
+                    comment,
                 });
             }
-            Ok(item_vec)
+            Ok(posts_vec)
         }
-        Err(err) => Err(AppError::DbError(err)),
+        Err(error) => Err(AppError::DbError(error)),
     }
 }
 
