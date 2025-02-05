@@ -1,6 +1,6 @@
 use sea_orm::{
     ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait,
-    QueryFilter, QueryOrder, QuerySelect, SqlErr,
+    PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, SqlErr,
 };
 use serde::Serialize;
 use sm_entity::{comment, post};
@@ -61,6 +61,20 @@ pub async fn get_tags(
                 Ok(None)
             }
         }
+        Err(err) => Err(AppError::DbError(err)),
+    }
+}
+
+pub async fn get_num_likes(
+    post: &sm_entity::post::Model,
+    db_client: &DatabaseConnection,
+) -> Result<u64, AppError> {
+    match post
+        .find_related(sm_entity::like::Entity)
+        .count(db_client)
+        .await
+    {
+        Ok(num_likes) => Ok(num_likes),
         Err(err) => Err(AppError::DbError(err)),
     }
 }
