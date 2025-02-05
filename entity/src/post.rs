@@ -27,6 +27,8 @@ pub enum Relation {
     Comment,
     #[sea_orm(has_many = "super::tag::Entity")]
     Tag,
+    #[sea_orm(has_many = "super::like::Entity")]
+    Like,
 }
 
 impl Related<super::user::Entity> for Entity {
@@ -48,6 +50,12 @@ impl Related<super::tag::Entity> for Entity {
 
     fn via() -> Option<RelationDef> {
         Some(super::post_tag::Relation::Post.def().rev())
+    }
+}
+
+impl Related<super::like::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Like.def()
     }
 }
 

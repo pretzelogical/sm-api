@@ -10,6 +10,7 @@ mod m20250122_090442_create_tag_table;
 mod m20250122_090545_seed_tag;
 mod m20250129_175434_create_post_tag;
 mod m20250129_180017_seed_post_tag;
+mod m20250205_223646_create_like_table;
 
 pub struct Migrator;
 
@@ -27,6 +28,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250122_090545_seed_tag::Migration),
             Box::new(m20250129_175434_create_post_tag::Migration),
             Box::new(m20250129_180017_seed_post_tag::Migration),
+            Box::new(m20250205_223646_create_like_table::Migration),
         ]
     }
 }
