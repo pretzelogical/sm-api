@@ -2,13 +2,14 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, DeriveEntityModel)]
-#[sea_orm(table_name = "sm_user")]
+#[sea_orm(table_name = "user")]
 pub struct Model {
     #[sea_orm(primary_key)]
     #[serde(skip_deserializing, skip_serializing)]
     pub id: i64,
     pub name: String,
     pub pass: String,
+    pub handle: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
