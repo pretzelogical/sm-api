@@ -31,13 +31,13 @@ pub enum Relation {
 
 impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
-        super::user::Relation::Like.def()
+        Relation::User.def()
     }
 }
 
 impl Related<super::post::Entity> for Entity {
     fn to() -> RelationDef {
-        super::post::Relation::Like.def()
+        Relation::Post.def()
     }
 }
 

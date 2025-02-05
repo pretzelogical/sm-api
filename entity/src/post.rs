@@ -43,6 +43,12 @@ impl Related<super::comment::Entity> for Entity {
     }
 }
 
+impl Related<super::like::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Like.def()
+    }
+}
+
 impl Related<super::tag::Entity> for Entity {
     fn to() -> RelationDef {
         super::post_tag::Relation::Tag.def()
@@ -50,12 +56,6 @@ impl Related<super::tag::Entity> for Entity {
 
     fn via() -> Option<RelationDef> {
         Some(super::post_tag::Relation::Post.def().rev())
-    }
-}
-
-impl Related<super::like::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::Like.def()
     }
 }
 
