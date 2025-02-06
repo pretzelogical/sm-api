@@ -69,7 +69,7 @@ pub async fn new_user(
     let new_user = user::ActiveModel {
         name: ActiveValue::Set(args.name.to_owned()),
         pass: ActiveValue::Set(args.pass.to_owned()),
-        handle: ActiveValue::Set(args.handle.to_owned()),
+        handle: ActiveValue::Set(args.handle.to_owned().replace("@", "")),
         ..Default::default()
     }
     .insert(db_client)
