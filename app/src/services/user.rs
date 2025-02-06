@@ -21,9 +21,10 @@ pub async fn get_by_id(
 }
 
 pub async fn get_by_handle(
-    handle: &String,
+    handle: String,
     db_client: &DatabaseConnection,
 ) -> Result<user::Model, AppError> {
+    let handle = handle.replace("@", "");
     let db_res = user::Entity::find()
         .filter(user::Column::Handle.contains(handle))
         .one(db_client)

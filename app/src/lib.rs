@@ -1,6 +1,7 @@
 use crate::conf::db_conf;
 use crate::routes::auth::{check_auth, log_in, register};
 use crate::routes::post::{create_post, get_post};
+use crate::routes::user;
 use actix_cors::Cors;
 use actix_files::Files;
 use actix_web::{middleware::Logger, web, App, HttpServer};
@@ -36,23 +37,17 @@ async fn start() -> std::io::Result<()> {
             .service(web::resource("/auth").route(web::get().to(check_auth)))
             .service(web::resource("/auth/login").route(web::post().to(log_in)))
             .service(web::resource("/auth/register").route(web::post().to(register)))
-            // .service(
-            //     web::resource("/user")
-            //         .route(web::get().to(get_user))
-            //         .wrap(middleware::auth::JWTSession),
-            // )
+            .service(
+                web::resource("/user/{handle}")
+                    .route(web::get().to(user::get_by_handle))
+                    .wrap(middleware::auth::JWTSession),
+            )
             .service(
                 web::resource("/post")
                     .route(web::get().to(get_post))
                     .route(web::post().to(create_post))
                     .wrap(middleware::auth::JWTSession),
             )
-            // .service(
-            //     web::resource("/post/{id}/comment")
-            //         .route(web::get().to(get_comments))
-            //         .route(web::post().to(create_comment))
-            //         .wrap(middleware::auth::JWTSession),
-            // )
             .service(Files::new(
                 "/media/post",
                 format!("{FILE_UPLOAD_ROOT}/post"),
