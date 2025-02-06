@@ -2,6 +2,7 @@ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, 
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 use services::time::{exp, now};
+use services::user::NewUserArgs;
 
 use crate::error::AppError;
 use crate::services;
@@ -95,12 +96,10 @@ pub async fn login_user(
 
 // Creates a new user with username and password and returns the user and a jwt
 pub async fn create_user(
-    user_name: &String,
-    user_password: &String,
+    args: NewUserArgs,
     db_client: &DatabaseConnection,
 ) -> Result<(sm_entity::user::Model, String), AppError> {
-    let user = services::user::new_user(user_name, user_password, db_client).await?;
+    let user = services::user::new_user(args, db_client).await?;
     let token = create_auth_token(&user)?;
     Ok((user, token))
 }
-

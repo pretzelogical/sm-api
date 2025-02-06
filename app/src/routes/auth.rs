@@ -4,6 +4,8 @@ use serde::Serialize;
 use crate::routes::prelude::*;
 use crate::services;
 
+use services::user::NewUserArgs;
+
 #[derive(Serialize)]
 pub struct AuthUserResponse {
     pub id: i64,
@@ -62,10 +64,9 @@ pub async fn log_in(
 // Creates a new user and returns a jwt
 pub async fn register(
     app_state: web::Data<AppState>,
-    args: web::Json<AuthArgs>,
+    args: web::Json<NewUserArgs>,
 ) -> Result<HttpResponse, AppError> {
     let db_client = &app_state.db_client;
-    let (user, token) =
-        services::auth::create_user(&args.username, &args.password, db_client).await?;
+    let (user, token) = services::auth::create_user(args.into_inner(), db_client).await?;
     Ok(HttpResponse::Ok().json(AuthResponse::new(token, user)))
 }
